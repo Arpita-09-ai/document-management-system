@@ -1,0 +1,240 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id Int @id @default(autoincrement())
+
+  employeeId String @unique
+  email      String @unique
+
+  name String
+
+  passwordHash String
+
+  role         String @default("EMPLOYEE")
+  departmentId Int?
+
+  department        Department?        @relation(fields: [departmentId], references: [id])
+  documents         Document[]
+  folders           Folder[]           @relation("FolderOwner")
+  auditLogs         AuditLog[]
+  createdAt         DateTime           @default(now())
+  folderPermissions FolderPermission[]
+
+  folderRequests      FolderAccessRequest[]
+  checkedOutDocuments Document[]            @relation("DocumentCheckout")
+}
+
+model OTP {
+  id Int @id @default(autoincrement())
+
+  email String
+  code  String
+
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+}
+
+model RegistrationOTP {
+  id Int @id @default(autoincrement())
+
+  email String
+  code  String
+
+  employeeId String
+  name       String
+  password   String
+
+  region     String
+  location   String
+  department String
+
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+}
+
+model Captcha {
+  id        Int      @id @default(autoincrement())
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Document {
+  id Int @id @default(autoincrement())
+
+  title            String
+  originalFileName String
+
+  filePath String
+
+  mimeType String
+
+  fileHash     String
+  ocrText      String?
+  uploadedById Int
+  folderId     Int?
+  folder       Folder? @relation(fields: [folderId], references: [id])
+  documentType String?
+  tags         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  uploadedBy     User @relation(fields: [uploadedById], references: [id])
+  checkedOutById Int?
+
+  checkedOutBy User? @relation("DocumentCheckout", fields: [checkedOutById], references: [id])
+
+  checkedOutAt DateTime?
+  version      Int       @default(1)
+
+  @@index([uploadedById])
+  @@index([createdAt])
+  @@index([documentType])
+  @@index([folderId])
+}
+
+model AuditLog {
+  id Int @id @default(autoincrement())
+
+  action  String
+  details String?
+
+  userId Int
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+enum FolderType {
+  GENERAL
+  DEPARTMENTAL
+  CONFIDENTIAL
+}
+
+model Folder {
+  id Int @id @default(autoincrement())
+
+  name String
+
+  type FolderType
+
+  createdAt DateTime @default(now())
+
+  ownerId Int
+
+  owner User @relation("FolderOwner", fields: [ownerId], references: [id])
+
+  documents Document[]
+
+  permissions FolderPermission[]
+
+  requests     FolderAccessRequest[]
+  departmentId Int?
+
+  department Department? @relation("DepartmentFolders", fields: [departmentId], references: [id])
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model FolderAccessRequest {
+  id Int @id @default(autoincrement())
+
+  folderId    Int
+  requesterId Int
+
+  status RequestStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+
+  folder Folder @relation(fields: [folderId], references: [id])
+
+  requester User @relation(fields: [requesterId], references: [id])
+}
+
+model FolderPermission {
+  id Int @id @default(autoincrement())
+
+  folderId Int
+
+  userId Int
+
+  canView Boolean @default(true)
+
+  canEdit Boolean @default(true)
+
+  canDelete Boolean @default(false)
+
+  folder Folder @relation(fields: [folderId], references: [id])
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Announcement {
+  id Int @id @default(autoincrement())
+
+  title   String
+  content String
+
+  createdAt DateTime @default(now())
+}
+
+model DocumentType {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+}
+
+model Region {
+  id Int @id @default(autoincrement())
+
+  name String @unique
+
+  locations Location[]
+}
+
+model Location {
+  id Int @id @default(autoincrement())
+
+  name String
+
+  regionId Int
+  region   Region @relation(fields: [regionId], references: [id])
+
+  departments Department[]
+
+  @@index([regionId])
+}
+
+model Department {
+  id Int @id @default(autoincrement())
+
+  name String
+
+  locationId Int
+  location   Location @relation(fields: [locationId], references: [id])
+
+  users User[]
+
+  folders Folder[] @relation("DepartmentFolders")
+
+  @@index([locationId])
+}
