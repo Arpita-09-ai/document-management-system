@@ -130,7 +130,7 @@ const tempHash =
 
           name: normalizedName,
 
-          papassword: tempHash,
+          password: tempHash,
 
           region,
           location,
