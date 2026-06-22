@@ -14,7 +14,7 @@ const announcementRoutes =
 const documentTypeRoutes =
   require('./routes/documentTypeRoutes');
 const app = express();
-
+app.set('trust proxy', 1);
 app.use(cors());
 app.use(express.json());
 
