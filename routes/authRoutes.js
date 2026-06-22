@@ -139,16 +139,29 @@ const tempHash =
           expiresAt,
         },
       });
+console.log('OTP:', otp);
+      try {
+  await sendOtpEmail(
+    normalizedEmail,
+    otp
+  );
 
-      await sendOtpEmail(
-        normalizedEmail,
-        otp
-      );
+  res.json({
+    message:
+      'OTP sent to your email',
+  });
 
-      res.json({
-        message:
-          'OTP sent to your email',
-      });
+} catch (emailError) {
+  console.error(
+    'EMAIL FAILED:',
+    emailError
+  );
+
+  res.json({
+    message:
+      'OTP generated. Email delivery failed.',
+  });
+}
     } catch (error) {
       console.error(error);
 
