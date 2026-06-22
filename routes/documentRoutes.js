@@ -125,16 +125,25 @@ const encryptedFile =
     iv,
     encrypted,
   ]);
+const storageDir = path.join(
+  __dirname,
+  '..',
+  'storage'
+);
+
+if (!fs.existsSync(storageDir)) {
+  fs.mkdirSync(storageDir, {
+    recursive: true,
+  });
+}
+
 const fileName =
   `${uuidv4()}.enc`;
 
-const filePath =
-  path.join(
-    __dirname,
-    '..',
-    'storage',
-    fileName
-  );
+const filePath = path.join(
+  storageDir,
+  fileName
+);
 
 fs.writeFileSync(
   filePath,
